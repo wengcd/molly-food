@@ -1,4 +1,4 @@
-# 茉莉的菜 · Molly’s Food
+# 茉莉的私房菜 · Molly’s Food
 
 使用 **Astro + TypeScript + Markdown** 的家常菜谱网站。构建结果只有 HTML、CSS、JavaScript 和 WebP 图片，无需数据库、服务端、Workers 或 Pages Functions。
 
