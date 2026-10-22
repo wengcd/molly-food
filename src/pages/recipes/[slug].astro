@@ -1,0 +1,47 @@
+---
+import { createHash } from 'node:crypto';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import RecipeCard from '../../components/RecipeCard.astro';
+import { getRecipes } from '../../lib/recipes';
+import type { Recipe } from '../../lib/recipes';
+export async function getStaticPaths() {
+  const recipes = await getRecipes();
+  return recipes.map((recipe) => ({ params: { slug: recipe.slug }, props: { recipe, related: recipes.filter((other) => other.slug !== recipe.slug).slice(0, 2) } }));
+}
+interface Props { recipe: Recipe; related: Recipe[]; }
+const { recipe, related } = Astro.props;
+const ingredients = recipe.sections.find((section) => section.id === 'ingredients');
+const sections = recipe.sections.filter((section) => section.id !== 'ingredients');
+const revision = createHash('sha256').update(recipe.ingredients.join('|')).digest('hex').slice(0, 10);
+const structuredData = {
+  '@context': 'https://schema.org', '@type': 'Recipe',
+  name: recipe.title, description: recipe.description,
+  ...(recipe.cover && Astro.site ? { image: [new URL(recipe.cover.src, Astro.site).href] } : {}),
+  recipeCategory: recipe.category,
+  recipeYield: recipe.meta.份量,
+  recipeIngredient: recipe.ingredients,
+  recipeInstructions: recipe.steps.map((step, index) => ({ '@type': 'HowToStep', name: step.name, text: step.text, ...(Astro.site ? { url: new URL(`${recipe.href}#step-${index + 1}`, Astro.site).href } : {}) })),
+  inLanguage: 'zh-CN',
+};
+---
+<BaseLayout title={recipe.title} description={recipe.description} image={recipe.cover?.src}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\u003c')} />
+  <div class="container recipe-page" data-recipe-page={recipe.slug} data-revision={revision}>
+    <nav class="breadcrumbs" aria-label="当前位置"><a href="/">小厨房</a><span>/</span><a href="/#recipes">菜谱集</a><span>/</span><span aria-current="page">{recipe.title}</span></nav>
+    <section class="recipe-hero">
+      <div class="recipe-hero-copy"><div class="eyebrow"><span class="tiny-line"></span>{recipe.category} · MOLLY’S RECIPE</div><h1>{recipe.title}</h1><p class="recipe-lead">{recipe.description}</p><div class="recipe-tags"><span><Icon name="users" size={16}/>{recipe.meta.份量 || '家人共享'}</span>{recipe.meta.难度 && <span><Icon name="chef" size={16}/>{recipe.meta.难度}</span>}</div><div class="recipe-times"><div><span>准备时间</span><strong>{recipe.meta.准备时间 || '随手准备'}</strong></div><div><span>烹饪时间</span><strong>{recipe.meta.烹饪时间 || '按步骤调整'}</strong></div><div><span>口味</span><strong>{recipe.meta.口味 || '家常原味'}</strong></div></div><div class="recipe-actions"><a class="button button-primary" href="#method">开始做菜 <Icon name="arrow" size={18}/></a><button class="button button-outline" data-favorite={recipe.slug} aria-pressed="false"><Icon name="heart" size={17}/><span data-favorite-label>收藏菜谱</span></button><button class="icon-button print-button" id="print-recipe" aria-label="打印菜谱" title="打印菜谱"><Icon name="print" size={21}/></button></div></div>
+      {recipe.cover && <figure class="recipe-hero-image"><img src={recipe.cover.src} srcset={recipe.cover.srcset} sizes="(max-width: 760px) 100vw, 510px" width={recipe.cover.width} height={recipe.cover.height} alt={recipe.title} fetchpriority="high"/><figcaption><Icon name="heart" size={15}/>一家人共享的好味道</figcaption></figure>}
+    </section>
+    <nav class="recipe-toc" aria-label="菜谱目录"><a href="#ingredients">食材准备</a>{sections.map((section) => <a href={`#${section.id}`}>{section.title}</a>)}{recipe.notes.length > 0 && <a href="#kitchen-notes">下次调整</a>}</nav>
+    <div class="recipe-layout">
+      {ingredients && <aside class="ingredients-panel" id="ingredients"><div class="ingredient-heading"><div class="eyebrow">BEFORE WE COOK</div><h2>食材准备<Icon name="leaf" size={22}/></h2><div class="ingredient-progress"><span id="ingredient-count">已备好 0 / {recipe.ingredients.length} 项</span><button id="reset-ingredients" type="button">重置</button></div><progress id="ingredient-progress" max={recipe.ingredients.length || 1} value="0" aria-label="食材准备进度"/></div><div class="recipe-content ingredient-content" set:html={ingredients.html}/></aside>}
+      <div class="recipe-main-content">
+        {sections.map((section, index) => <section id={section.id} class:list={['recipe-section', { 'family-section': section.id === 'family' }]}><div class="section-label">{section.id === 'method' ? 'LET’S MAKE SOMETHING GOOD' : section.id === 'tips' ? 'LITTLE THINGS THAT MATTER' : section.id === 'family' ? 'FOR OUR LITTLE MOLLY' : `KITCHEN NOTE ${index + 1}`}</div><h2>{section.title}{section.id === 'method' && <span class="step-count">{recipe.steps.length} 个步骤，慢慢来</span>}</h2>{section.id === 'family' && recipe.meta.适用 && <p class="family-age">原菜谱记录：{recipe.meta.适用}</p>}<div class="recipe-content" set:html={section.html}/></section>)}
+        {recipe.notes.length > 0 && <section id="kitchen-notes" class="kitchen-notes"><div class="eyebrow">A NOTE FOR NEXT TIME</div><h2>留一点，下次更好吃。</h2><p>记下今天的味道，也记下家人的喜欢。</p><label class="sr-only" for="recipe-note">下次调整记录</label><textarea id="recipe-note" rows="7" placeholder={recipe.notes.join('\n')} maxlength="10000"/><div class="note-footer"><span id="note-status" role="status">记录仅保存在当前浏览器</span><button class="text-button" id="clear-note">清空记录</button></div></section>}
+        {recipe.attribution && <div class="recipe-attribution" set:html={recipe.attribution}/>}
+      </div>
+    </div>
+    {related.length > 0 && <section class="related-section"><div class="section-heading"><div><div class="eyebrow">SOMETHING ELSE TO TRY</div><h2>下一餐，也有好味。</h2></div><a href="/#recipes" class="text-link">回到菜谱集 <Icon name="arrow" size={18}/></a></div><div class="recipe-grid related-grid">{related.map((item, index) => <RecipeCard recipe={item} index={index}/>)}</div></section>}
+  </div>
+</BaseLayout>

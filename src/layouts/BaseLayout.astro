@@ -1,0 +1,37 @@
+---
+import Brand from '../components/Brand.astro';
+import Icon from '../components/Icon.astro';
+import '../styles/global.css';
+interface Props { title?: string; description?: string; image?: string; noindex?: boolean; }
+const { title, description = '茉莉的家常菜谱手记。认真做饭，好好吃饭；一锅家常味，两大一小共享。', image, noindex = false } = Astro.props;
+const pageTitle = title ? `${title} · 茉莉的菜` : '茉莉的菜 · 把日子，煮得有滋有味';
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = image && Astro.site ? new URL(image, Astro.site).href : image;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:title" content={pageTitle}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:locale" content="zh_CN"/>
+    {canonical && <meta property="og:url" content={canonical}/>}
+    {ogImage && <meta property="og:image" content={ogImage}/>}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <header class="site-header"><div class="container header-inner"><Brand/><nav aria-label="主导航"><a href="/#recipes" class:list={{ active: Astro.url.pathname === '/' }}>菜谱集</a><a href="/#about">关于小厨房</a><a href="/?view=saved#recipes" class="saved-nav"><Icon name="heart" size={17}/><span>我的收藏</span><span class="saved-count" data-saved-count hidden>0</span></a></nav></div></header>
+    <main id="main"><slot /></main>
+    <footer class="site-footer"><div class="container footer-inner"><Brand small/><p>一蔬一饭，是家的日常。</p><span>用心做饭 · 好好长大</span><a href="#main">回到顶部 ↑</a></div></footer>
+    <div class="toast" role="status" aria-live="polite" id="toast"></div>
+    <script>
+      import '../scripts/site';
+    </script>
+  </body>
+</html>

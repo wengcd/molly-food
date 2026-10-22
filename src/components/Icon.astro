@@ -1,0 +1,19 @@
+---
+interface Props { name: string; size?: number; class?: string; }
+const { name, size = 20, class: className } = Astro.props;
+const paths: Record<string, string> = {
+  arrow: 'M4 12h15m-6-6 6 6-6 6',
+  back: 'M20 12H5m6-6-6 6 6 6',
+  search: 'M21 21l-4.4-4.4M19 10.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0',
+  heart: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',
+  clock: 'M12 8v4l3 2M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+  leaf: 'M20 3C9 2 3 7 5 14c1 5 7 7 11 3 4-4 4-10 4-14ZM4 21 15 10',
+  book: 'M12 6c-3-3-7-3-10-2v15c4-1 7-1 10 2m0-15c3-3 7-3 10-2v15c-4-1-7-1-10 2V6',
+  print: 'M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v8H6v-8m11-2h1',
+  check: 'm5 12 4 4L19 6',
+  close: 'm6 6 12 12M6 18 18 6',
+  chef: 'M6 16v5h12v-5M6 16V11a4 4 0 0 1-2-7 5 5 0 0 1 5-1 4 4 0 0 1 6 0 5 5 0 0 1 5 1 4 4 0 0 1-2 7v5H6Z',
+};
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class={className}><path d={paths[name] || paths.leaf} /></svg>

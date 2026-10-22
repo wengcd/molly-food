@@ -1,0 +1,19 @@
+---
+import type { Recipe } from '../lib/recipes';
+import Icon from './Icon.astro';
+interface Props { recipe: Recipe; index?: number; }
+const { recipe, index = 0 } = Astro.props;
+---
+<article class="recipe-card" data-recipe-card data-slug={recipe.slug} data-category={recipe.category} data-search={`${recipe.title} ${recipe.category} ${recipe.description} ${recipe.ingredients.join(' ')} ${recipe.meta.tags.join(' ')}`}>
+  <a class="card-image-link" href={recipe.href} tabindex="-1" aria-hidden="true">
+    {recipe.cover ? <img src={recipe.cover.src} srcset={recipe.cover.srcset} sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 1100px) 46vw, 390px" width={recipe.cover.width} height={recipe.cover.height} alt={recipe.title} loading="lazy" /> : <div class="image-fallback"><Icon name="chef" size={56}/></div>}
+    <span class="image-caption">{recipe.meta.口味 || '把家常，做得好吃'}</span>
+  </a>
+  <button class="favorite-button" data-favorite={recipe.slug} aria-label={`收藏${recipe.title}`} aria-pressed="false" title="收藏菜谱"><Icon name="heart" /></button>
+  <div class="card-content">
+    <div class="card-category"><span>{recipe.category}</span><span class="recipe-number">RECIPE / {String(index + 1).padStart(2, '0')}</span></div>
+    <h3><a href={recipe.href}>{recipe.title}</a></h3>
+    <p>{recipe.description.split(/[。；]/)[0]}。</p>
+    <div class="card-meta"><span><Icon name="clock" size={15}/>{recipe.duration || recipe.meta.烹饪时间 || '从容慢做'}</span><span><Icon name="chef" size={15}/>{recipe.meta.难度 || '家常做法'}</span><a href={recipe.href} class="card-arrow" aria-label={`查看${recipe.title}的做法`}><Icon name="arrow" size={19}/></a></div>
+  </div>
+</article>

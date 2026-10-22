@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RecipeCard from '../components/RecipeCard.astro';
+import Icon from '../components/Icon.astro';
+import { getRecipes } from '../lib/recipes';
+const recipes = await getRecipes();
+const featured = recipes.find((recipe) => recipe.featured) || recipes[0];
+const second = recipes.find((recipe) => recipe.slug !== featured?.slug);
+const categories = [...new Set(recipes.map((recipe) => recipe.category))];
+---
+<BaseLayout image={featured?.cover?.src}>
+  <section class="home-hero container">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="tiny-line"></span> FROM OUR LITTLE KITCHEN</div>
+      <h1>把日子，<br/>煮得<span class="hand-underline">有滋有味<svg viewBox="0 0 300 15" preserveAspectRatio="none" aria-hidden="true"><path d="M3 9Q135-1 297 7M40 13Q150 4 252 11"/></svg></span>。</h1>
+      <p class="hero-description">寻常食材，慢慢料理。<br/>把一家人的喜欢，写成一道道家常菜。</p>
+      <a href="#recipes" class="button button-primary">今天，吃点什么 <Icon name="arrow" size={19}/></a>
+      <div class="hero-footnote"><span class="little-flower">✳</span><span>两大一小，一桌刚刚好的幸福</span></div>
+    </div>
+    <div class="hero-visual">
+      {featured && <a class="hero-dish" href={featured.href} aria-label={`查看${featured.title}`}>
+        {featured.cover && <img src={featured.cover.src} srcset={featured.cover.srcset} sizes="(max-width: 700px) 88vw, 560px" width={featured.cover.width} height={featured.cover.height} alt={featured.title} fetchpriority="high" loading="eager" />}
+        <div class="hero-dish-label"><span>小厨房 · 今日推荐</span><strong>{featured.title}</strong><span class="hero-dish-arrow"><Icon name="arrow" size={21}/></span></div>
+      </a>}
+      <div class="round-stamp" aria-hidden="true"><span>MADE WITH LOVE</span><Icon name="leaf" size={30}/><strong>家的味道</strong></div>
+      {second?.cover && <a class="little-photo" href={second.href}><img src={second.cover.src} srcset={second.cover.srcset} sizes="180px" width={second.cover.width} height={second.cover.height} alt={second.title}/><span>{second.title} <span>♡</span></span></a>}
+      <span class="hero-handnote">好好吃饭，慢慢长大。<svg viewBox="0 0 90 45" aria-hidden="true"><path d="M3 5c28 29 48 35 78 16m-12 0 13-2-3 12"/></svg></span>
+    </div>
+  </section>
+
+  <div class="kitchen-values container"><span><Icon name="leaf" size={19}/>顺手买得到的食材</span><span><Icon name="users" size={19}/>大人孩子，一起吃好</span><span><Icon name="book" size={19}/>每一步，都认真记录</span></div>
+
+  <section id="recipes" class="recipes-section container" aria-labelledby="recipes-title">
+    <div class="section-heading"><div><div class="eyebrow">THE RECIPE COLLECTION</div><h2 id="recipes-title">小厨房的<span>菜谱集</span><span class="heading-flower" aria-hidden="true">✳</span></h2><p>不必复杂，好吃的家常菜就很幸福。</p></div><label class="search-box"><Icon name="search" size={19}/><input id="recipe-search" type="search" placeholder="找一道菜，或一种食材…" aria-label="搜索菜名或食材" autocomplete="off"/><kbd aria-hidden="true">/</kbd></label></div>
+    <div class="collection-toolbar"><div class="filter-list" role="group" aria-label="菜谱分类"><button class="filter-button is-active" data-filter="all" aria-pressed="true">全部菜谱 <span>{recipes.length}</span></button>{categories.map((category) => <button class="filter-button" data-filter={category} aria-pressed="false">{category}</button>)}<button class="filter-button saved-filter" data-filter="saved" aria-pressed="false"><Icon name="heart" size={15}/>我的收藏</button></div><span class="result-count" data-result-count role="status" aria-live="polite">共 {recipes.length} 道好味</span></div>
+    <div class="recipe-grid" id="recipe-grid">
+      {recipes.map((recipe, index) => <RecipeCard recipe={recipe} index={index}/>)}
+      <aside class="recipe-notebook" data-collection-note><span class="notebook-index">A LITTLE NOTE</span><svg class="vegetable-drawing" viewBox="0 0 180 150" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M45 88c-17-3-23 11-17 27 5 14 24 22 43 23 30 2 53-10 56-31 3-16-10-25-25-23M34 100c18 10 52 16 83 0M35 116c26 14 58 14 78-2M55 100c-6-20-7-37 6-47 10 5 14 24 10 48M66 99c-3-22 1-42 13-46 10 10 6 30-1 48M83 99c4-13 12-19 25-16M57 53c-10-8-14-19-8-25 6 1 12 8 13 22M67 53c1-18 7-26 15-25 3 8-5 21-13 25M98 87c-6-13-2-26 10-29 13-3 23 6 20 19-1 8-9 13-18 12M107 58c-5-9-5-17 0-19 5 5 4 12 1 18m1 0c5-10 10-12 15-9-2 6-9 8-14 9M130 95c5-13 13-21 24-15-1 13-10 18-24 15Zm1-2c-2-10 1-18 8-19 5 8 1 14-8 19"/><path d="m23 59 7-4m-4-5 2 13m107-39 5 7m3-6-10 4"/></svg><h3>日子还长，<br/>好味道慢慢添。</h3><p>一餐一饭，一点一滴。<br/>记录平凡日子里，<br/>值得再做一次的味道。</p><span class="notebook-signature">Molly’s little kitchen</span></aside>
+    </div>
+    <div class="empty-state" id="empty-state" hidden><Icon name="book" size={38}/><h3 data-empty-title>还没找到这道好味</h3><p data-empty-description>试试其他菜名，或用“番茄”“鸡蛋”这样的食材搜索。</p><button class="button button-outline" id="reset-filters">看看全部菜谱 <Icon name="arrow" size={17}/></button></div>
+    <noscript><p class="noscript-note">完整菜谱可以直接浏览。开启 JavaScript 后，还可以搜索、收藏和记录备菜进度。</p></noscript>
+  </section>
+
+  <section id="about" class="about-section container"><div class="about-illustration" aria-hidden="true"><svg viewBox="0 0 210 160" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M27 91h151c-7 31-29 48-74 48S34 122 27 91ZM22 91h161M53 146h99M66 75c-15-15 16-22 2-37m35 35c-15-15 16-22 2-37m34 37c-15-15 16-22 2-37M158 34l21-18m-17 25 25-10"/><path d="M46 98c7 17 17 24 31 28M174 60l3-7m-6 3 9 2"/></svg><span>一锅暖暖的家常</span></div><div class="about-copy"><div class="eyebrow">A TABLE FOR ALL OF US</div><h2>一份家常味，<br/>也是一份<span>好好生活的心意。</span></h2><p>这里是茉莉的小厨房，记下适合一家人共享的菜。<br class="desktop-break"/>不求花样繁多，只希望每一餐都吃得舒服、开心。</p><p class="about-promise"><Icon name="heart" size={17}/>先盛小朋友的清淡份，再调成大人喜欢的味道。</p></div></section>
+</BaseLayout>
