@@ -9,5 +9,10 @@
     "slug": "shrimp-tofu-steamed-egg",
     "category": "清鲜蒸菜",
     "order": 2
+  },
+  "清蒸桂鱼配西兰花": {
+    "slug": "steamed-mandarin-fish-broccoli",
+    "category": "清鲜蒸菜",
+    "order": 3
   }
 }

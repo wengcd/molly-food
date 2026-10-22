@@ -2,7 +2,9 @@
 
 使用 **Astro + TypeScript + Markdown** 的家常菜谱网站。构建结果只有 HTML、CSS、JavaScript 和 WebP 图片，无需数据库、服务端、Workers 或 Pages Functions。
 
-已收录 **番茄土豆炖牛肉末、虾仁豆腐蒸蛋**，包括全部 10 张成品和步骤图。原 Obsidian 文件未修改。
+已收录 **10 道全家同餐菜谱**，每道包括一张成品图和四张步骤图，共 **50 张图片**。菜谱保留原 Obsidian 格式，由 `import:recipes` 脚本复制到项目中，导入不会修改源笔记。
+
+菜谱包括番茄土豆炖牛肉末、虾仁豆腐蒸蛋、清蒸桂鱼配西兰花、香菇土豆焖鸡腿、肉末烧茄子、冬瓜虾仁烩、白菜豆腐炖肉末、白萝卜炖牛腩、番茄菜花炒蛋和菠菜肉末烩面。
 
 ## 本地运行
 
@@ -71,7 +73,7 @@ npm run build
 在原来的「茉莉的菜」文件夹新增菜谱并放好附件，在本项目根目录运行：
 
 ```powershell
-npm run import:recipes -- "C:\Users\wengc\Documents\note\私人菜谱\茉莉的菜"
+npm run import:recipes -- "C:\Users\matt\workspace\note\私人菜谱\茉莉的菜"
 npm run build
 ```
 
