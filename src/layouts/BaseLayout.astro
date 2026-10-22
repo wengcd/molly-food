@@ -1,6 +1,7 @@
 ---
 import Brand from '../components/Brand.astro';
 import Icon from '../components/Icon.astro';
+import GoogleAnalytics from '../components/GoogleAnalytics.astro';
 import '../styles/global.css';
 interface Props { title?: string; description?: string; image?: string; noindex?: boolean; }
 const { title, description = '茉莉的私房菜，记录一家人的家常菜谱。认真做饭，好好吃饭；一锅家常味，两大一小共享。', image, noindex = false } = Astro.props;
@@ -22,6 +23,7 @@ const ogImage = image && Astro.site ? new URL(image, Astro.site).href : image;
     {canonical && <meta property="og:url" content={canonical}/>}
     {ogImage && <meta property="og:image" content={ogImage}/>}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <GoogleAnalytics />
     <slot name="head" />
   </head>
   <body>

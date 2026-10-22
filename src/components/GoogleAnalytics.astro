@@ -1,0 +1,20 @@
+<script>
+  // Astro emits a deferred module: inject analytics on the client without blocking parsing.
+  if (!document.getElementById('ga-init')) {
+    const measurementId = 'G-3SMK2EZZNF';
+    const loader = document.createElement('script');
+    loader.async = true;
+    loader.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+
+    const init = document.createElement('script');
+    init.id = 'ga-init';
+    init.text = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${measurementId}');
+    `;
+
+    document.head.append(loader, init);
+  }
+</script>
