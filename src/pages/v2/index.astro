@@ -1,0 +1,394 @@
+---
+import V2Layout from '../../layouts/V2Layout.astro';
+import V2RecipeCard from '../../components/v2/V2RecipeCard.astro';
+import Icon from '../../components/Icon.astro';
+import { getRecipes } from '../../lib/recipes';
+
+const recipes = await getRecipes();
+const featured = recipes.find((r) => r.featured) || recipes[0];
+const second = recipes.find((r) => r.slug === 'shrimp-tofu-steamed-egg') || recipes[1];
+const third = recipes.find((r) => r.slug === 'spinach-pork-noodles') || recipes[2];
+const categories = [...new Set(recipes.map((r) => r.category))];
+
+const ingredientFilters = [
+  { label: '全部食材', value: '' },
+  { label: '牛肉', value: '牛肉' },
+  { label: '猪肉末', value: '猪肉' },
+  { label: '鸡腿', value: '鸡腿' },
+  { label: '虾仁 / 桂鱼', value: '虾仁|桂鱼' },
+  { label: '豆腐', value: '豆腐' },
+  { label: '鸡蛋', value: '鸡蛋' },
+  { label: '番茄', value: '番茄' },
+  { label: '土豆 / 萝卜', value: '土豆|萝卜' },
+];
+
+// 序列化轻量菜谱数据供“灵感配餐台”与“速览抽屉”使用
+const clientRecipes = recipes.map((r, idx) => ({
+  slug: r.slug,
+  number: String(idx + 1).padStart(2, '0'),
+  title: r.title,
+  category: r.category,
+  duration: r.duration || r.meta.烹饪时间 || '家常慢做',
+  taste: r.meta.口味 || '家常原味',
+  age: r.meta.适用 || '23个月+，按咀嚼能力调整',
+  description: r.description,
+  cover: r.cover?.src || '',
+  v2Href: `/v2/recipes/${encodeURIComponent(r.slug)}/`,
+  ingredients: r.ingredients,
+  steps: r.steps,
+}));
+---
+<V2Layout image={featured?.cover?.src} v1Href="/">
+  <!-- 1. 杂志刊头封面故事 Hero -->
+  <section class="v2-hero v2-container">
+    <div class="v2-hero-grid">
+      <div class="v2-hero-editorial">
+        <div>
+          <div class="v2-issue-row">
+            <span class="v2-kicker"><span class="v2-kicker-dot"></span>FROM OUR LITTLE KITCHEN</span>
+            <span class="v2-issue-tag">两大一小 · 23个月+ 全家同餐手帖</span>
+          </div>
+
+          <h1>
+            一锅人间烟火，<br />
+            分盛<span class="v2-hero-highlight">两份欢喜</span>。
+          </h1>
+
+          <p class="v2-hero-lead">
+            不用单独开小灶的家常温柔——先借番茄、洋葱、菌菇与高汤的自然甘甜炖煮出锅，盛出茉莉的软嫩清淡份，再添一勺生抽与香料，成全大人的下饭好味。
+          </p>
+
+          <div class="v2-hero-actions">
+            <a href="#recipes" class="v2-btn v2-btn-primary">
+              <span>翻阅 {recipes.length} 道私房菜谱</span>
+              <Icon name="arrow" size={18} />
+            </a>
+            <a href="#meal-planner" class="v2-btn v2-btn-secondary" id="hero-random-combo">
+              <span>✨ 今天吃什么？灵感配餐</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="v2-split-flow" aria-label="全家同餐三部曲">
+          <div class="v2-flow-step">
+            <span class="v2-flow-num">STEP 01 · 共锅底味</span>
+            <strong>自然食材慢煮</strong>
+            <span>不早放盐酱香料，用蔬果与鲜肉原味打底</span>
+          </div>
+          <div class="v2-flow-step">
+            <span class="v2-flow-num">STEP 02 · 优先分餐</span>
+            <strong>先盛茉莉小碗</strong>
+            <span>干净餐具盛出，按咀嚼力压软或剪碎</span>
+          </div>
+          <div class="v2-flow-step">
+            <span class="v2-flow-num">STEP 03 · 大人提味</span>
+            <strong>回锅收汁添香</strong>
+            <span>补生抽、葱蒜或黑胡椒，拌饭浓郁过瘾</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="v2-hero-bento">
+        {featured && (
+          <a
+            class="v2-featured-card"
+            href={`/v2/recipes/${encodeURIComponent(featured.slug)}/`}
+            aria-label={`查看今日主推：${featured.title}`}
+          >
+            {featured.cover && (
+              <img
+                src={featured.cover.src}
+                srcset={featured.cover.srcset}
+                sizes="(max-width: 720px) 92vw, 560px"
+                width={featured.cover.width}
+                height={featured.cover.height}
+                alt={featured.title}
+                fetchpriority="high"
+                loading="eager"
+              />
+            )}
+            <div class="v2-featured-overlay">
+              <div class="v2-featured-top">
+                <span class="v2-featured-ribbon">★ 封面主推 · {featured.category}</span>
+                <span class="v2-featured-meta-pill">{featured.duration || '约40分钟'}</span>
+              </div>
+              <div class="v2-featured-bottom">
+                <h2>{featured.title}</h2>
+                <p>{featured.description}</p>
+              </div>
+            </div>
+          </a>
+        )}
+
+        <div class="v2-hero-mini-row">
+          {second && (
+            <a class="v2-mini-dish" href={`/v2/recipes/${encodeURIComponent(second.slug)}/`}>
+              {second.cover && (
+                <img
+                  src={second.cover.src}
+                  srcset={second.cover.srcset}
+                  sizes="96px"
+                  width={second.cover.width}
+                  height={second.cover.height}
+                  alt={second.title}
+                />
+              )}
+              <div class="v2-mini-info">
+                <span class="v2-mini-cat">{second.category}</span>
+                <strong>{second.title}</strong>
+                <span>{second.meta.口味 || '滑嫩鲜香'} · {second.duration}</span>
+              </div>
+            </a>
+          )}
+
+          {third && (
+            <a class="v2-mini-dish" href={`/v2/recipes/${encodeURIComponent(third.slug)}/`}>
+              {third.cover && (
+                <img
+                  src={third.cover.src}
+                  srcset={third.cover.srcset}
+                  sizes="96px"
+                  width={third.cover.width}
+                  height={third.cover.height}
+                  alt={third.title}
+                />
+              )}
+              <div class="v2-mini-info">
+                <span class="v2-mini-cat">{third.category}</span>
+                <strong>{third.title}</strong>
+                <span>{third.meta.口味 || '一锅主食'} · {third.duration}</span>
+              </div>
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 今日餐桌 · 灵感配餐台 -->
+  <section id="meal-planner" class="v2-planner-section v2-container" aria-labelledby="planner-heading">
+    <div class="v2-planner-card">
+      <div class="v2-planner-header">
+        <div>
+          <span class="v2-kicker"><span class="v2-kicker-dot"></span>DAILY MENU CURATOR</span>
+          <h2 id="planner-heading">今日餐桌 · 灵感配餐台</h2>
+          <p>不知道今晚做什么？按一荤一素、一炖一蒸为你搭好两大一小的一餐。</p>
+        </div>
+
+        <div class="v2-planner-controls" role="group" aria-label="配餐方案切换">
+          <button type="button" class="v2-combo-preset is-active" data-combo-index="0">酸甜炖菜＋滑蒸蛋</button>
+          <button type="button" class="v2-combo-preset" data-combo-index="1">清蒸鲜鱼＋暖豆腐</button>
+          <button type="button" class="v2-combo-preset" data-combo-index="2">香浓焖鸡＋清甜冬瓜</button>
+          <button type="button" class="v2-combo-preset" data-combo-index="3">省心一锅端面食</button>
+          <button type="button" class="v2-planner-shuffle" id="shuffle-combo">
+            <span>🎲 随机换一桌</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="v2-planner-body" id="planner-stage">
+        <div class="v2-planner-dishes" id="planner-dishes">
+          {featured && (
+            <a class="v2-planner-slot" href={`/v2/recipes/${encodeURIComponent(featured.slug)}/`}>
+              {featured.cover && <img src={featured.cover.src} alt={featured.title} width="84" height="84" />}
+              <div class="v2-planner-slot-info">
+                <span class="v2-planner-slot-role">主菜担当 · {featured.category}</span>
+                <h3>{featured.title}</h3>
+                <p>{featured.meta.口味} · {featured.duration}</p>
+              </div>
+            </a>
+          )}
+          {second && (
+            <a class="v2-planner-slot" href={`/v2/recipes/${encodeURIComponent(second.slug)}/`}>
+              {second.cover && <img src={second.cover.src} alt={second.title} width="84" height="84" />}
+              <div class="v2-planner-slot-info">
+                <span class="v2-planner-slot-role">搭配好味 · {second.category}</span>
+                <h3>{second.title}</h3>
+                <p>{second.meta.口味} · {second.duration}</p>
+              </div>
+            </a>
+          )}
+        </div>
+
+        <div class="v2-planner-summary">
+          <div class="v2-planner-summary-title">
+            <span id="planner-combo-name">★ 搭配建议：浓汁拌饭 ＋ 清润蒸菜</span>
+            <span id="planner-combo-time">建议统筹：约 45 分钟</span>
+          </div>
+          <p class="v2-planner-reason" id="planner-combo-desc">
+            炖牛肉末的时候同步用蒸锅蒸上虾仁豆腐蛋羹，一红一白、一浓一淡，茉莉既有酸甜汤汁拌软饭，又有滑嫩高蛋白。
+          </p>
+          <div class="v2-planner-ingredients" id="planner-combo-ings">
+            核心采购：牛肉末、番茄、土豆、鲜虾仁、内酯豆腐、鸡蛋
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 菜谱手帖主集合 -->
+  <section id="recipes" class="v2-collection-section v2-container" aria-labelledby="v2-recipes-title">
+    <div class="v2-collection-header">
+      <div>
+        <span class="v2-kicker"><span class="v2-kicker-dot"></span>THE RECIPE ARCHIVE</span>
+        <h2 id="v2-recipes-title">私房菜谱手帖</h2>
+        <p>每道菜均附成品图、4 步拆解图、备菜勾选清单与宝宝分餐指南。</p>
+      </div>
+
+      <div class="v2-search-controls">
+        <label class="v2-search-box">
+          <Icon name="search" size={18} />
+          <input
+            id="recipe-search"
+            type="search"
+            placeholder="搜索菜名、口味或食材（如：番茄、牛肉）…"
+            aria-label="搜索菜名或食材"
+            autocomplete="off"
+          />
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+
+        <div class="v2-view-toggle" role="group" aria-label="视图模式切换">
+          <button type="button" class="v2-view-btn is-active" data-view-mode="grid" aria-pressed="true">画廊视图</button>
+          <button type="button" class="v2-view-btn" data-view-mode="list" aria-pressed="false">紧凑目录</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="v2-filter-panel">
+      <div class="v2-filter-row">
+        <div class="v2-category-tabs" role="group" aria-label="按分类筛选">
+          <button type="button" class="v2-cat-btn is-active" data-filter="all" aria-pressed="true">
+            <span>全部菜谱</span>
+            <span class="v2-cat-count">{recipes.length}</span>
+          </button>
+          {categories.map((cat) => (
+            <button type="button" class="v2-cat-btn" data-filter={cat} aria-pressed="false">
+              <span>{cat}</span>
+            </button>
+          ))}
+          <button type="button" class="v2-cat-btn" data-filter="saved" aria-pressed="false">
+            <Icon name="heart" size={14} />
+            <span>我的收藏</span>
+          </button>
+        </div>
+
+        <span class="v2-result-status" data-result-count role="status" aria-live="polite">
+          当前展示 {recipes.length} 道家常好味
+        </span>
+      </div>
+
+      <div class="v2-ingredient-bar" role="group" aria-label="按冰箱食材快筛">
+        <span class="v2-ingredient-label">按食材找菜：</span>
+        {ingredientFilters.map((item, idx) => (
+          <button
+            type="button"
+            class:list={['v2-ing-chip', { 'is-active': idx === 0 }]}
+            data-ing-filter={item.value}
+            aria-pressed={idx === 0 ? 'true' : 'false'}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="v2-recipe-grid" id="recipe-grid">
+      {recipes.map((recipe, index) => (
+        <V2RecipeCard recipe={recipe} index={index} />
+      ))}
+    </div>
+
+    <div class="v2-empty-state" id="empty-state" hidden>
+      <Icon name="book" size={38} />
+      <h3 data-empty-title>没有找到符合条件的菜谱</h3>
+      <p data-empty-description>试试切换食材标签，或者清空搜索词看看全部 10 道家常菜。</p>
+      <button type="button" class="v2-btn v2-btn-secondary" id="reset-filters">
+        <span>重置全部筛选</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 4. 一锅两味 · 全家同餐原则专栏 -->
+  <section id="philosophy" class="v2-philosophy-section v2-container" aria-labelledby="phil-title">
+    <div>
+      <span class="v2-kicker"><span class="v2-kicker-dot"></span>COOKING PRINCIPLES</span>
+      <h2 id="phil-title" style="font-size: 30px; margin-top: 6px;">一锅同煮，如何兼顾大人与宝宝？</h2>
+      <p style="font-size: 14px; color: var(--v2-ink-secondary); margin-top: 6px;">
+        茉莉的小厨房遵循三项简单实用的分餐准则，让做饭不繁琐、吃饭更安心。
+      </p>
+    </div>
+
+    <div class="v2-philosophy-grid">
+      <article class="v2-phil-card">
+        <span class="v2-phil-icon">01</span>
+        <h3>调味时序：先原味，后提鲜</h3>
+        <p>
+          共锅炖煮阶段不放盐、生抽、蚝油、料酒或刺激香料，依靠熟番茄、洋葱、香菇、白萝卜等食材本身的酸甜与肉香打底。盛出茉莉的一小碗后，大人份再回锅补生抽、蒜末或黑胡椒。
+        </p>
+      </article>
+
+      <article class="v2-phil-card">
+        <span class="v2-phil-icon">02</span>
+        <h3>质地标准：叉子可压碎的温柔</h3>
+        <p>
+          土豆、萝卜、茄子等块茎蔬菜统一炖至用叉子能轻松压碎；肉末先冷水或温油拨散不结硬团；鸡腿、牛腩剔除筋膜与碎骨撕成细丝。上桌前按宝宝实际咀嚼能力压小、剪短。
+        </p>
+      </article>
+
+      <article class="v2-phil-card">
+        <span class="v2-phil-icon">03</span>
+        <h3>安全温度：彻底熟透不靠猜</h3>
+        <p>
+          家禽、肉末、牛腩、鱼虾与鸡蛋必须完全熟透（中心温度达到安全烹调标准，如肉末 71°C、禽肉 74°C），不吃半熟溏心蛋或生腌，生熟案板刀具严格分开。
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 5. 速览步骤抽屉 (Quick Preview Drawer) -->
+  <div class="v2-drawer-backdrop" id="v2-quick-drawer" hidden aria-hidden="true">
+    <aside class="v2-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <div class="v2-drawer-header">
+        <div>
+          <span class="v2-kicker" id="drawer-category">菜谱速览</span>
+          <h3 id="drawer-title" style="font-size: 20px; margin-top: 2px;">菜谱名称</h3>
+        </div>
+        <button type="button" class="v2-btn v2-btn-ghost" id="close-drawer" style="min-height: 36px; padding: 6px 14px;">
+          <Icon name="close" size={16} />
+          <span>关闭</span>
+        </button>
+      </div>
+
+      <div class="v2-drawer-body">
+        <div class="v2-drawer-hero">
+          <img id="drawer-img" src="/favicon.svg" alt="" width="120" height="120" />
+          <div>
+            <p id="drawer-desc" style="font-size: 13px; color: var(--v2-ink-secondary); line-height: 1.7;"></p>
+            <p id="drawer-meta" style="font-size: 12px; color: var(--v2-terracotta); font-weight: 600; margin-top: 8px;"></p>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 15px; margin-bottom: 10px;">所需食材清单</h4>
+          <div id="drawer-ingredients" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 15px; margin-bottom: 10px;">四步做法速览</h4>
+          <div class="v2-drawer-steps" id="drawer-steps"></div>
+        </div>
+      </div>
+
+      <div class="v2-drawer-footer">
+        <span style="font-size: 12px; color: var(--v2-ink-muted);">支持备菜勾选、打印与全屏跟做</span>
+        <a id="drawer-full-link" href="/v2/" class="v2-btn v2-btn-primary" style="min-height: 40px; padding: 8px 18px;">
+          <span>进入完整图文详情页</span>
+          <Icon name="arrow" size={16} />
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <script type="application/json" id="v2-recipes-data" set:html={JSON.stringify(clientRecipes).replace(/</g, '\\u003c')} />
+</V2Layout>

@@ -1,0 +1,290 @@
+---
+import { createHash } from 'node:crypto';
+import V2Layout from '../../../layouts/V2Layout.astro';
+import Icon from '../../../components/Icon.astro';
+import V2RecipeCard from '../../../components/v2/V2RecipeCard.astro';
+import { getRecipes } from '../../../lib/recipes';
+import type { Recipe } from '../../../lib/recipes';
+
+export async function getStaticPaths() {
+  const recipes = await getRecipes();
+  return recipes.map((recipe) => ({
+    params: { slug: recipe.slug },
+    props: {
+      recipe,
+      related: recipes.filter((other) => other.slug !== recipe.slug).slice(0, 3),
+    },
+  }));
+}
+
+interface Props {
+  recipe: Recipe;
+  related: Recipe[];
+}
+
+const { recipe, related } = Astro.props;
+const ingredients = recipe.sections.find((section) => section.id === 'ingredients');
+const sections = recipe.sections.filter((section) => section.id !== 'ingredients');
+const revision = createHash('sha256').update(recipe.ingredients.join('|')).digest('hex').slice(0, 10);
+---
+<V2Layout
+  title={recipe.title}
+  description={recipe.description}
+  image={recipe.cover?.src}
+  v1Href={recipe.href}
+>
+  <div class="v2-container" data-recipe-page={recipe.slug} data-revision={revision}>
+    <nav class="v2-breadcrumbs" aria-label="当前位置">
+      <div class="v2-crumb-links">
+        <a href="/v2/">小厨房</a>
+        <span>/</span>
+        <a href="/v2/#recipes">菜谱集</a>
+        <span>/</span>
+        <span aria-current="page" style="color: var(--v2-ink); font-weight: 500;">{recipe.title}</span>
+      </div>
+    </nav>
+
+    <section class="v2-recipe-hero-card">
+      <div>
+        <span class="v2-kicker">
+          <span class="v2-kicker-dot"></span>
+          <span>{recipe.category} · FAMILY RECIPE</span>
+        </span>
+
+        <h1 class="v2-recipe-title">{recipe.title}</h1>
+        <p class="v2-recipe-lead">{recipe.description}</p>
+
+        <div class="v2-spec-grid">
+          <div class="v2-spec-box">
+            <span>准备时间</span>
+            <strong>{recipe.meta.准备时间 || '约15分钟'}</strong>
+          </div>
+          <div class="v2-spec-box">
+            <span>烹饪耗时</span>
+            <strong>{recipe.meta.烹饪时间 || recipe.duration || '按步骤调整'}</strong>
+          </div>
+          <div class="v2-spec-box">
+            <span>风味特点</span>
+            <strong>{recipe.meta.口味 || '清润家常味'}</strong>
+          </div>
+          <div class="v2-spec-box">
+            <span>共享份量</span>
+            <strong>两大一小同餐</strong>
+          </div>
+        </div>
+
+        <div class="v2-toddler-banner">
+          <Icon name="leaf" size={18} />
+          <span>
+            <strong>分餐适口提示：</strong>
+            {recipe.meta.适用 || '23个月+，先盛宝宝清淡软嫩份，再给大人调味'}
+          </span>
+        </div>
+
+        <div class="v2-recipe-actions">
+          <button type="button" class="v2-btn v2-btn-primary" id="open-cook-mode">
+            <Icon name="chef" size={18} />
+            <span>开启全屏跟做模式</span>
+          </button>
+
+          <button
+            type="button"
+            class="v2-btn v2-btn-secondary"
+            data-favorite={recipe.slug}
+            aria-pressed="false"
+          >
+            <Icon name="heart" size={17} />
+            <span data-favorite-label>收藏菜谱</span>
+          </button>
+
+          <button
+            type="button"
+            class="v2-btn v2-btn-ghost"
+            id="print-recipe"
+            aria-label="打印菜谱"
+            title="打印菜谱"
+          >
+            <Icon name="print" size={18} />
+            <span>打印手帖</span>
+          </button>
+        </div>
+      </div>
+
+      {recipe.cover && (
+        <figure class="v2-recipe-cover-frame">
+          <img
+            src={recipe.cover.src}
+            srcset={recipe.cover.srcset}
+            sizes="(max-width: 760px) 100vw, 500px"
+            width={recipe.cover.width}
+            height={recipe.cover.height}
+            alt={recipe.title}
+            fetchpriority="high"
+          />
+          <figcaption class="v2-cover-caption">
+            <span><strong>一锅两味</strong> · 自然底味共煮，分盛后再添大人调料</span>
+            <span style="color: var(--v2-terracotta); font-weight: 600;">{recipe.steps.length} 步图文</span>
+          </figcaption>
+        </figure>
+      )}
+    </section>
+
+    <nav class="v2-toc-bar" aria-label="菜谱章节导航">
+      <div class="v2-toc-links">
+        <a href="#ingredients">1. 食材准备 ({recipe.ingredients.length})</a>
+        {sections.map((section, idx) => (
+          <a href={`#${section.id}`}>{idx + 2}. {section.title}</a>
+        ))}
+        {recipe.notes.length > 0 && <a href="#kitchen-notes">下次调整手记</a>}
+      </div>
+      <span style="font-size: 12px; color: var(--v2-ink-muted); white-space: nowrap;">
+        勾选进度与手记自动保存在当前浏览器
+      </span>
+    </nav>
+
+    <div class="v2-workspace">
+      {ingredients && (
+        <aside class="v2-ingredients-card" id="ingredients">
+          <div class="v2-ing-header">
+            <div>
+              <span class="v2-kicker">PREP CHECKLIST</span>
+              <h2>食材准备</h2>
+            </div>
+            <Icon name="leaf" size={22} />
+          </div>
+
+          <div class="v2-ing-progress-bar">
+            <div class="v2-ing-progress-meta">
+              <span id="ingredient-count">已备好 0 / {recipe.ingredients.length} 项</span>
+              <button id="reset-ingredients" type="button">重置清单</button>
+            </div>
+            <progress
+              id="ingredient-progress"
+              max={recipe.ingredients.length || 1}
+              value="0"
+              aria-label="食材准备进度"
+            />
+          </div>
+
+          <div class="v2-rich-content" set:html={ingredients.html} />
+        </aside>
+      )}
+
+      <div>
+        {sections.map((section) => (
+          <section
+            id={section.id}
+            class:list={['v2-section-block', { 'is-family': section.id === 'family' }]}
+          >
+            <div class="v2-section-head">
+              <div>
+                <span class="v2-kicker">
+                  {section.id === 'method'
+                    ? 'STEP-BY-STEP GUIDE'
+                    : section.id === 'tips'
+                      ? 'KEY TECHNIQUES'
+                      : section.id === 'family'
+                        ? 'FOR LITTLE MOLLY'
+                        : 'KITCHEN NOTE'}
+                </span>
+                <h2>{section.title}</h2>
+              </div>
+              {section.id === 'method' && (
+                <span class="v2-step-badge-info">共 {recipe.steps.length} 个图文步骤 · 点击步骤可标记完成</span>
+              )}
+            </div>
+
+            <div class="v2-rich-content" set:html={section.html} />
+          </section>
+        ))}
+
+        {recipe.notes.length > 0 && (
+          <section id="kitchen-notes" class="v2-notes-card">
+            <span class="v2-kicker"><span class="v2-kicker-dot"></span>KITCHEN LOGBOOK</span>
+            <h2>留一点记录，下次做更合口味</h2>
+            <p style="font-size: 13px; color: var(--v2-ink-secondary);">
+              记录今天的炖煮时间、番茄酸甜度或茉莉吃了多少，自动保存在本机浏览器中。
+            </p>
+            <label class="sr-only" for="recipe-note">下次调整记录</label>
+            <textarea
+              id="recipe-note"
+              rows="7"
+              placeholder={recipe.notes.join('\n')}
+              maxlength="10000"
+            />
+            <div class="v2-notes-footer">
+              <span id="note-status" role="status">记录仅保存在当前浏览器</span>
+              <button type="button" id="clear-note">清空手记</button>
+            </div>
+          </section>
+        )}
+
+        {recipe.attribution && (
+          <div
+            class="v2-rich-content"
+            style="margin-top: 22px; font-size: 12px; color: var(--v2-ink-muted);"
+            set:html={recipe.attribution}
+          />
+        )}
+      </div>
+    </div>
+
+    {related.length > 0 && (
+      <section style="margin-top: 56px; padding-top: 36px; border-top: 1px solid var(--v2-border);">
+        <div class="v2-collection-header">
+          <div>
+            <span class="v2-kicker"><span class="v2-kicker-dot"></span>MORE FROM THE JOURNAL</span>
+            <h2 style="font-size: 26px; margin-top: 4px;">下一餐，也可以试试这几道</h2>
+          </div>
+          <a href="/v2/#recipes" class="v2-btn v2-btn-secondary" style="min-height: 40px; padding: 8px 18px;">
+            <span>返回全部菜谱</span>
+            <Icon name="arrow" size={16} />
+          </a>
+        </div>
+
+        <div class="v2-recipe-grid">
+          {related.map((item, idx) => (
+            <V2RecipeCard recipe={item} index={idx} showQuickView={false} />
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+
+  <!-- 全屏跟做模式 (Step-by-Step Cooking Focus Modal) -->
+  <div class="v2-cook-modal" id="v2-cook-modal" hidden aria-hidden="true">
+    <div class="v2-cook-dialog" role="dialog" aria-modal="true" aria-labelledby="cook-step-title">
+      <div class="v2-cook-top">
+        <div>
+          <span class="v2-kicker">COOKING FOCUS MODE · 全屏跟做</span>
+          <strong style="display: block; font-size: 16px; margin-top: 2px;">{recipe.title}</strong>
+        </div>
+        <button type="button" class="v2-btn v2-btn-ghost" id="close-cook-mode" style="min-height: 36px; padding: 6px 14px;">
+          <Icon name="close" size={16} />
+          <span>退出跟做 (Esc)</span>
+        </button>
+      </div>
+
+      <div class="v2-cook-body">
+        <img id="cook-step-img" src={recipe.cover?.src || '/favicon.svg'} alt="" />
+        <div>
+          <span class="v2-cook-step-counter" id="cook-step-counter">STEP 01 / 04</span>
+          <h3 class="v2-cook-step-title" id="cook-step-title">步骤标题</h3>
+          <div class="v2-cook-step-text" id="cook-step-text"></div>
+        </div>
+      </div>
+
+      <div class="v2-cook-bottom">
+        <button type="button" class="v2-btn v2-btn-secondary" id="cook-prev-btn">
+          <Icon name="back" size={16} />
+          <span>上一步</span>
+        </button>
+        <span id="cook-step-dots" style="font-size: 13px; color: var(--v2-ink-muted); font-weight: 600;">1 / 4</span>
+        <button type="button" class="v2-btn v2-btn-primary" id="cook-next-btn">
+          <span>下一步</span>
+          <Icon name="arrow" size={16} />
+        </button>
+      </div>
+    </div>
+  </div>
+</V2Layout>

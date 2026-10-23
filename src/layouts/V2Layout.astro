@@ -1,0 +1,99 @@
+---
+import Icon from '../components/Icon.astro';
+import GoogleAnalytics from '../components/GoogleAnalytics.astro';
+import '../styles/v2.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  v1Href?: string;
+}
+
+const {
+  title,
+  description = '茉莉的私房菜，记录一家人的家常菜谱。认真做饭，好好吃饭；一锅家常味，两大一小共享。',
+  image,
+  v1Href = '/',
+} = Astro.props;
+
+const pageTitle = title ? `${title} · 茉莉的私房菜` : '茉莉的私房菜 · 把日子，煮得有滋有味';
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = image && Astro.site ? new URL(image, Astro.site).href : image;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#faf5ee" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <GoogleAnalytics />
+    <slot name="head" />
+  </head>
+  <body class="v2-body">
+    <a class="v2-skip-link" href="#main">跳到主要内容</a>
+
+    <header class="v2-header">
+      <div class="v2-container v2-header-inner">
+        <a class="v2-brand" href="/v2/" aria-label="茉莉的私房菜，首页">
+          <span class="v2-brand-emblem" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 33h36c-1 13-8 19-18 19S15 46 14 33ZM11 33h42M24 58h16M32 29V12M32 22c-10 0-13-6-12-11 9 0 13 5 12 11ZM33 16c9 0 13-5 12-10-8 0-12 4-12 10Z" />
+            </svg>
+          </span>
+          <span class="v2-brand-text">
+            <span class="v2-brand-title">茉莉的私房菜</span>
+            <span class="v2-brand-sub">MOLLY’S FOOD · 餐桌手帖</span>
+          </span>
+        </a>
+
+        <nav class="v2-nav" aria-label="主导航">
+          <a href="/v2/#recipes" class:list={['v2-nav-link', { 'is-active': Astro.url.pathname === '/v2/' }]}>菜谱集</a>
+          <a href="/v2/#meal-planner" class="v2-nav-link hide-mobile">今日配餐</a>
+          <a href="/v2/#philosophy" class="v2-nav-link hide-mobile">一锅两味</a>
+          <a href={v1Href} class="v2-nav-link" title="切换至清雅经典视图">经典视图</a>
+          <a href="/v2/?view=saved#recipes" class="v2-saved-pill">
+            <Icon name="heart" size={16} />
+            <span>我的收藏</span>
+            <span class="v2-saved-badge" data-saved-count hidden>0</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="v2-footer">
+      <div class="v2-container v2-footer-inner">
+        <div>
+          <strong style="font-family: var(--v2-serif); font-size: 18px; color: #fffdf9;">茉莉的私房菜 · 日光餐桌手帖</strong>
+          <p class="v2-footer-copy" style="margin-top: 4px;">一蔬一饭，是家的日常。先盛小朋友的清淡份，再调成大人喜欢的味道。</p>
+        </div>
+        <div class="v2-footer-links">
+          <a href="/v2/#recipes">全部菜谱</a>
+          <a href="/v2/#meal-planner">今日配餐</a>
+          <a href={v1Href}>经典视图</a>
+          <a href="#main">回到顶部 ↑</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class="v2-toast" role="status" aria-live="polite" id="toast"></div>
+
+    <script>
+      import '../scripts/v2-site';
+    </script>
+  </body>
+</html>

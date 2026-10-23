@@ -1,0 +1,105 @@
+---
+import type { Recipe } from '../../lib/recipes';
+import Icon from '../Icon.astro';
+
+interface Props {
+  recipe: Recipe;
+  index?: number;
+  showQuickView?: boolean;
+}
+
+const { recipe, index = 0, showQuickView = true } = Astro.props;
+const v2Href = `/v2/recipes/${encodeURIComponent(recipe.slug)}/`;
+
+// 提取前 4 项核心主料名称，过滤常见水油与大人后加调料
+const coreIngredients = recipe.ingredients
+  .filter((item) => !/^(食用油|植物油|热水|温水|清水|水\s|大人调味)/.test(item.trim()))
+  .map((item) => item.trim().split(/[\s（(，,]/)[0])
+  .filter(Boolean)
+  .slice(0, 4);
+---
+<article
+  class="v2-card"
+  data-recipe-card
+  data-slug={recipe.slug}
+  data-category={recipe.category}
+  data-search={`${recipe.title} ${recipe.category} ${recipe.description} ${recipe.ingredients.join(' ')} ${recipe.meta.tags.join(' ')} ${recipe.meta.口味 || ''}`}
+>
+  <div class="v2-card-media">
+    <a class="v2-card-media-link" href={v2Href} tabindex="-1" aria-hidden="true">
+      {recipe.cover ? (
+        <img
+          src={recipe.cover.src}
+          srcset={recipe.cover.srcset}
+          sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1080px) 46vw, 390px"
+          width={recipe.cover.width}
+          height={recipe.cover.height}
+          alt={recipe.title}
+          loading="lazy"
+        />
+      ) : (
+        <div style="display:grid;place-items:center;height:100%;color:var(--v2-terracotta);">
+          <Icon name="chef" size={48} />
+        </div>
+      )}
+    </a>
+    <div class="v2-card-top-badges">
+      <span class="v2-badge-num">NO.{String(index + 1).padStart(2, '0')}</span>
+      <span class="v2-badge-cat">{recipe.category}</span>
+    </div>
+    <button
+      class="v2-card-fav"
+      data-favorite={recipe.slug}
+      aria-label={`收藏${recipe.title}`}
+      aria-pressed="false"
+      title="收藏菜谱"
+    >
+      <Icon name="heart" size={18} />
+    </button>
+  </div>
+
+  <div class="v2-card-body">
+    <div class="v2-card-meta-top">
+      <span><Icon name="clock" size={14} />{recipe.duration || recipe.meta.烹饪时间 || '家常慢做'}</span>
+      <span><Icon name="users" size={14} />两大一小同餐</span>
+    </div>
+
+    <h3 class="v2-card-title">
+      <a href={v2Href}>{recipe.title}</a>
+    </h3>
+
+    <p class="v2-card-desc">{recipe.description}</p>
+
+    {coreIngredients.length > 0 && (
+      <div class="v2-card-ingredients" aria-label="主要食材">
+        {coreIngredients.map((ing) => (
+          <span class="v2-card-ing-pill">{ing}</span>
+        ))}
+      </div>
+    )}
+
+    <div class="v2-card-footer">
+      <span class="v2-card-taste">
+        <Icon name="leaf" size={14} />
+        <span>{recipe.meta.口味 || '清润家常味'}</span>
+      </span>
+
+      <div class="v2-card-actions">
+        {showQuickView && (
+          <button
+            type="button"
+            class="v2-quick-btn"
+            data-quick-view={recipe.slug}
+            aria-label={`快速预览${recipe.title}的步骤与食材`}
+          >
+            速览步骤
+          </button>
+        )}
+        <a href={v2Href} class="v2-card-go" aria-label={`查看${recipe.title}完整做法`}>
+          <span>详单</span>
+          <Icon name="arrow" size={14} />
+        </a>
+      </div>
+    </div>
+  </div>
+</article>
